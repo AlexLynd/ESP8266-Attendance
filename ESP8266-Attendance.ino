@@ -18,7 +18,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", -28800, 60000);
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 XPT2046_Touchscreen touch( TOUCH_CS, TOUCH_IRQ);
-
+int trigger = 1;
 const unsigned char splash [] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -633,31 +633,7 @@ void setup(){
   tft.println("      *** 5805 sign-in system ***");
   tft.println("\nconnecting to: "+String(ssid));
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    tft.print(".");
-  }
-  tft.fillScreen(0x3186);
-  tft.setTextSize(2);
-  tft.setCursor(45,80);
-  
-  
-  tft.drawRoundRect(10,50,220,80,4, 0x456D);
-  tft.fillRoundRect(10,50,220,80,4, 0x456D);
-
-  tft.drawRoundRect(10,140,220,80,4, 0xF987);
-  tft.fillRoundRect(10,140,220,80,4, 0xF987);
-
-  tft.drawRoundRect(10,230,220,80,4, 0x335F);
-  tft.fillRoundRect(10,230,220,80,4, 0x335F);  
-
-  tft.println("Sign in by ID");
-  tft.setCursor(55,170);
-  tft.println("Who's Here?");
-  tft.setCursor(95,260);
-  tft.println("Info");
-  tft.setCursor(90,10);
-  
+  while (WiFi.status() != WL_CONNECTED) { delay(500); tft.print("."); }
 }
 TS_Point rawLocation;
 int prev = 0;
@@ -675,26 +651,96 @@ void signInById() {
       keypad++;
     }
   }
-  tft.setCursor(
+  tft.setCursor(23, 278);  tft.println("back");
+  tft.setCursor(115, 278); tft.println(0);
+  tft.setCursor(180, 278); tft.println("del");
+  int id = 0; boolean back = false;
+  int trigger = 0;
+  while (!back) {
+    tft.setCursor(90, 15);
+    tft.printf("%05d", id);
+    if (touch.touched() and trigger == 0){
+      tft.drawRect(90,15,60,16,0x3186); tft.fillRect(90,15,60,16,0x3186);
+      rawLocation = touch.getPoint();
+      if (map(rawLocation.x, 200, 3670, 0, 320)>60 and map(rawLocation.x, 200, 3670, 0, 320)<120 and String(id).length()< 5) { // row 1  
+        id *=10;      
+        if (map(rawLocation.y, 290, 3870, 0, 240)>10  and map(rawLocation.y, 290, 3870, 0, 240)<80)  { id+= 3; }
+        if (map(rawLocation.y, 290, 3870, 0, 240)>85  and map(rawLocation.y, 290, 3870, 0, 240)<155) { id+= 2; }
+        if (map(rawLocation.y, 290, 3870, 0, 240)>160 and map(rawLocation.y, 290, 3870, 0, 240)<250) { id+= 1; }
+      }
+      else if (map( rawLocation.x, 200, 3670, 0, 320 )> 125 and map( rawLocation.x, 200, 3670, 0, 320 ) < 185 and String(id).length()< 5) { // row 2
+        id*=10;
+        if ( map( rawLocation.y, 290, 3870, 0, 240 ) > 10  and map( rawLocation.y, 290, 3870, 0, 240 ) < 80 ) { id+= 6; }
+        if ( map( rawLocation.y, 290, 3870, 0, 240 ) > 85  and map( rawLocation.y, 290, 3870, 0, 240 ) < 155 ) { id+= 5; }
+        if ( map( rawLocation.y, 290, 3870, 0, 240 ) > 160 and map( rawLocation.y, 290, 3870, 0, 240 ) < 250 ) { id+= 4; }
+      }
+      else if (map( rawLocation.x, 200, 3670, 0, 320 )> 190 and map( rawLocation.x, 200, 3670, 0, 320 ) < 250 and String(id).length()< 5) { // row 3
+        id*=10;
+         if ( map( rawLocation.y, 290, 3870, 0, 240 ) > 10 and map( rawLocation.y, 290, 3870, 0, 240 ) < 80 ) { id+= 9; }
+        if ( map( rawLocation.y, 290, 3870, 0, 240 ) > 85 and map( rawLocation.y, 290, 3870, 0, 240 ) < 155 ) { id+= 8; }
+        if ( map( rawLocation.y, 290, 3870, 0, 240 ) > 160 and map( rawLocation.y, 290, 3870, 0, 240 ) < 250 ) { id+= 7; }
+      }
+      else if (map( rawLocation.x, 200, 3670, 0, 320 )> 255 and map( rawLocation.x, 200, 3670, 0, 320 ) < 315) { // row 3
+         if ( map( rawLocation.y, 290, 3870, 0, 240 ) > 10 and map( rawLocation.y, 290, 3870, 0, 240 ) < 80 ) { // 3
+          id/= 10;
+        }
+        if ( map( rawLocation.y, 290, 3870, 0, 240 ) > 85 and map( rawLocation.y, 290, 3870, 0, 240 ) < 155 ) { // 6
+          id*=10;
+          id+= 0;
+        }
+        if ( map( rawLocation.y, 290, 3870, 0, 240 ) > 160 and map( rawLocation.y, 290, 3870, 0, 240 ) < 250 ) { // 9
+          back = true;
+        }
+      }
+      trigger = 1;
+    }
+    else if (!touch.touched()) {
+      trigger = 0;
+    }
+  }
 }
 void loop(){
-  tft.setCursor(90,10);
+  if (trigger == 1) {
+    tft.fillScreen(0x3186);
+    tft.setTextSize(2);
+    tft.setCursor(45,80);
+    
+    
+    tft.drawRoundRect(10,50,220,80,4, 0x456D);
+    tft.fillRoundRect(10,50,220,80,4, 0x456D);
+  
+    tft.drawRoundRect(10,140,220,80,4, 0xF987);
+    tft.fillRoundRect(10,140,220,80,4, 0xF987);
+  
+    tft.drawRoundRect(10,230,220,80,4, 0x335F);
+    tft.fillRoundRect(10,230,220,80,4, 0x335F);  
+  
+    tft.println("Sign in by ID");
+    tft.setCursor(55,170);
+    tft.println("Who's Here?");
+    tft.setCursor(95,260);
+    tft.println("Info");
+    trigger = 0; prev = 0;
+  }
+
+  tft.setCursor(90,15);
   timeClient.update();
   if (prev!= timeClient.getMinutes()) {
-    tft.drawRect(90,10,60,16,0x3186);
-    tft.fillRect(90,10,60,16,0x3186);
+    tft.drawRect(90,15,60,16,0x3186);
+    tft.fillRect(90,15,60,16,0x3186);
     tft.printf("%02d:%02d",hourFormat(timeClient.getHours()),timeClient.getMinutes());
     prev = timeClient.getMinutes(); 
   }
-  if (touch.touched()) {
+  if (touch.touched() and trigger == 0) {
     rawLocation = touch.getPoint();
     if (map( rawLocation.x, 200, 3670, 0, 320 )>50 and map( rawLocation.x, 200, 3670, 0, 320 ) <130) {
       signInById();
+      trigger =1;
     }
-    if (map( rawLocation.x, 200, 3670, 0, 320 )> 140 and map( rawLocation.x, 200, 3670, 0, 320 ) <220) {
+    else if (map( rawLocation.x, 200, 3670, 0, 320 )> 140 and map( rawLocation.x, 200, 3670, 0, 320 ) <220) {
       tft.fillScreen(0xF987);
     }
-    if (map( rawLocation.x, 200, 3670, 0, 320 )>230 and map( rawLocation.x, 200, 3670, 0, 320 ) <310) {
+    else if (map( rawLocation.x, 200, 3670, 0, 320 )>230 and map( rawLocation.x, 200, 3670, 0, 320 ) <310) {
       tft.fillScreen(0x335F);
     }
   }
